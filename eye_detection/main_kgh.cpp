@@ -34,7 +34,7 @@
 //        cv::equalizeHist(gray_frame, gray_frame); // Equalize histogram for better detection
 //
 //        std::vector<cv::Rect> faceRect, eyesRect;
-//        // detectMultiScale(ÀÔ·Â ÀÌ¹ÌÁö, ÃßÃâµÈ ¿µ¿ª, ÀÌ¹ÌÁö Ãà¼Ò Á¤µµ, µµÇü ÀÌ¿ô ¼ö, ÇÃ·¡±×, ÃßÃâ ¿µ¿ª ÃÖ¼Ò Å©±â, ÃÖ´ë Å©±â)
+//        // detectMultiScale(ï¿½Ô·ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ ï¿½ï¿½, ï¿½Ã·ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ Å©ï¿½ï¿½, ï¿½Ö´ï¿½ Å©ï¿½ï¿½)
 //        if(!face.empty()) face.detectMultiScale(gray_frame, faceRect, 1.1, 8, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(30, 30));
 //        if (!eyes.empty()) eyes.detectMultiScale(gray_frame, eyesRect, 1.1, 4, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(30, 30));
 //
@@ -64,7 +64,7 @@
 #include <iostream>
 
 int main() {
-    // Haar Cascade ºÐ·ù±â ·Îµå
+    // Haar Cascade ï¿½Ð·ï¿½ï¿½ï¿½ ï¿½Îµï¿½
     cv::CascadeClassifier face_cascade, eyes_cascade;
     if (!face_cascade.load("haarcascade_frontalface_default.xml")) {
         std::cerr << "Error: face cascade not loaded." << std::endl;
@@ -75,7 +75,7 @@ int main() {
         return -1;
     }
 
-    // ±âº» Ä«¸Þ¶ó ¿­±â
+    // ï¿½âº» Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½
     cv::VideoCapture cap(0);
     if (!cap.isOpened()) {
         std::cerr << "Error: camera not opened." << std::endl;
@@ -96,38 +96,38 @@ int main() {
         std::vector<cv::Rect> faces;
         face_cascade.detectMultiScale(gray_frame, faces, 1.1, 10, 0, cv::Size(30, 30));
 
-        // °¢ ¾ó±¼¿¡ ´ëÇØ ¹Ýº¹
+        // ï¿½ï¿½ ï¿½ó±¼¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ýºï¿½
         for (const auto& face : faces) {
 
-            // ¾ó±¼ ¿µ¿ªÀ» ROI·Î ¼³Á¤
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ROIï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             cv::Mat face_roi_gray = gray_frame(face);
             cv::Mat face_roi_color = frame(face);
 
             std::vector<cv::Rect> eyes;
-            // ¾ó±¼ ¾È¿¡¼­ ´« °ËÃâ
+            // ï¿½ï¿½ ï¿½È¿ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             eyes_cascade.detectMultiScale(face_roi_gray, eyes, 1.1, 10, 0, cv::Size(20, 20));
 
-            // °¢ ´«¿¡ ´ëÇØ ¹Ýº¹
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ýºï¿½
             if (!eyes_cascade.empty())
             {
                 cv::rectangle(frame, face, cv::Scalar(0, 255, 0), 2);
                 for (const auto& eye : eyes) {
                     cv::rectangle(face_roi_color, eye, cv::Scalar(255, 0, 0), 2);
 
-                    // ´« ¿µ¿ªÀ» ROI·Î ¼³Á¤ÇÏ¿© ´«µ¿ÀÚ Ã£±â
+                    // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ROIï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
                     cv::Mat eye_roi = face_roi_gray(eye);
 
-                    // 1. ÀÌÁøÈ­ (Thresholding)
+                    // 1. ï¿½ï¿½ï¿½ï¿½È­ (Thresholding)
                     cv::Mat binary_eye;
-                    // ÀÓ°è°ªÀº Á¶¸í È¯°æ¿¡ µû¶ó Á¶ÀýÇØ¾ß ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+                    // ï¿½Ó°è°ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È¯ï¿½æ¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.
                     cv::threshold(eye_roi, binary_eye, 80, 255, cv::THRESH_BINARY_INV);
 
-                    // 2. ¸ðÆú·ÎÁö ¿¬»êÀ¸·Î ³ëÀÌÁî Á¦°Å
+                    // 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
                     cv::erode(binary_eye, binary_eye, kernel, cv::Point(-1, -1), 1);
                     cv::dilate(binary_eye, binary_eye, kernel, cv::Point(-1, -1), 2);
 
-                    // 3. À±°û¼± Ã£±â
+                    // 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
                     std::vector<std::vector<cv::Point>> contours;
                     cv::findContours(binary_eye, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
@@ -135,20 +135,20 @@ int main() {
                     cv::Point pupil_center;
                     bool pupil_found = false;
 
-                    // 4. °¡Àå Å« À±°û¼±À» Ã£¾Æ Áß½ÉÁ¡ °è»ê
+                    // 4. ï¿½ï¿½ï¿½ï¿½ Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
                     for (const auto& contour : contours) {
                         double area = cv::contourArea(contour);
                         if (area > max_area) {
                             max_area = area;
                             cv::Moments mu = cv::moments(contour);
-                            // ¸ð¸àÆ®¸¦ ÀÌ¿ëÇØ Áß½ÉÁ¡ °è»ê
+                            // ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
                             pupil_center = cv::Point(mu.m10 / mu.m00, mu.m01 / mu.m00);
                             pupil_found = true;
                         }
                     }
 
                     if (pupil_found) {
-                        // ¿øº» ÇÁ·¹ÀÓ ÁÂÇ¥°è·Î º¯È¯ÇÏ¿© ¿ø ±×¸®±â
+                        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï¿ï¿½ ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
                         cv::circle(face_roi_color, cv::Point(eye.x + pupil_center.x, eye.y + pupil_center.y), 3, cv::Scalar(0, 0, 255), -1);
                     }
                 }
