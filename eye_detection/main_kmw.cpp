@@ -72,6 +72,9 @@ int main()
         Mat frame; cap >> frame;
         if (frame.empty()) break;
 
+        // === 좌우 반전(거울 모드) ===
+        cv::flip(frame, frame, 1);
+
         Mat gray; cvtColor(frame, gray, COLOR_BGR2GRAY);
 
         // 1) 얼굴 검출
@@ -81,18 +84,25 @@ int main()
             rectangle(frame, f, Scalar(0, 255, 0), 2);
 
             // 2) 얼굴 ROI에서 눈 검출 (상반부 우선)
-            Rect upperFace = Rect(f.x, f.y, f.width, f.height * 0.6);
+            Rect upperFace = Rect(f.x, f.y, f.width, (int)std::round(f.height * 0.6));
             upperFace &= Rect(0, 0, frame.cols, frame.rows);
             Mat faceROI = gray(upperFace);
 
             std::vector<Rect> eyes;
             eyeCasc.detectMultiScale(faceROI, eyes, 1.1, 2, 0, Size(30, 30));
-            // 좌/우 눈을 정렬해 사용
-            std::sort(eyes.begin(), eyes.end(), [](const Rect& a, const Rect& b) { return a.x < b.x; });
 
-            for (size_t i = 0; i < eyes.size() && i < 2; ++i) {
-                Rect e = eyes[i];
-                Rect eyeRect(e.x + upperFace.x, e.y + upperFace.y, e.width, e.height);
+            // 얼굴 중앙 x (프레임 좌표계)
+            const float faceCenterX = f.x + f.width * 0.5f;
+
+            // 한 프레임에서의 결과를 담을 그릇
+            bool foundL = false, foundR = false;
+            Point2f normL(0, 0), normR(0, 0);
+            float radL = 0.f, radR = 0.f;
+            Rect eyeRectL, eyeRectR;
+
+            for (const Rect& eInFace : eyes) {
+                // 프레임 좌표계의 눈 박스
+                Rect eyeRect(eInFace.x + upperFace.x, eInFace.y + upperFace.y, eInFace.width, eInFace.height);
                 rectangle(frame, eyeRect, Scalar(255, 200, 0), 2);
 
                 Mat eyeGray = gray(eyeRect).clone();
@@ -100,29 +110,27 @@ int main()
                 // 3) 동공 찾기
                 Point pupil; float r = 0;
                 bool ok = findPupil(eyeGray, pupil, r);
+
+                // 눈 중심 x
+                float eyeCenterX = eyeRect.x + eyeRect.width * 0.5f;
+                bool isLeftSide = (eyeCenterX < faceCenterX);
+
                 if (ok) {
-                    // 4) 프레임 좌표로 변환
+                    // 프레임 좌표로 환산된 동공
                     Point pupilInFrame = Point(eyeRect.x + pupil.x, eyeRect.y + pupil.y);
                     circle(frame, pupilInFrame, (int)std::max(2.f, r), Scalar(0, 0, 255), 2);
 
-                    // 시선 좌표 정규화 (-1..1): 눈 ROI 중심 기준
-                    Point2f center(eyeRect.x + eyeRect.width * 0.5f, eyeRect.y + eyeRect.height * 0.5f);
-                    Point2f offset = Point2f(pupilInFrame) - center;
+                    // 눈 ROI 중심 기준 정규화 (-1..1)
+                    Point2f centerEye(eyeRect.x + eyeRect.width * 0.5f, eyeRect.y + eyeRect.height * 0.5f);
+                    Point2f offset = Point2f((float)pupilInFrame.x, (float)pupilInFrame.y) - centerEye;
                     Point2f norm(offset.x / (eyeRect.width * 0.5f),
                         offset.y / (eyeRect.height * 0.5f));
 
-                    // 5) 흔들림 감소(EMA)
-                    if (i == 0) { // 왼쪽 눈(화면상 좌측)
-                        if (emaLeft.x < -0.5f) emaLeft = norm;
-                        else emaLeft = emaPoint(emaLeft, norm, 0.2f);
-                        putText(frame, cv::format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
-                            Point(eyeRect.x, eyeRect.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+                    if (isLeftSide) {
+                        foundL = true;  normL = norm;  radL = r;  eyeRectL = eyeRect;
                     }
                     else {
-                        if (emaRight.x < -0.5f) emaRight = norm;
-                        else emaRight = emaPoint(emaRight, norm, 0.2f);
-                        putText(frame, cv::format("R(%.2f, %.2f)", emaRight.x, emaRight.y),
-                            Point(eyeRect.x, eyeRect.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+                        foundR = true;  normR = norm;  radR = r;  eyeRectR = eyeRect;
                     }
                 }
                 else {
@@ -130,6 +138,21 @@ int main()
                         FONT_HERSHEY_SIMPLEX, 0.5, Scalar(50, 50, 255), 1);
                 }
             }
+
+            // 4) 흔들림 감소(EMA) + 라벨 고정 출력
+            if (foundL) {
+                if (emaLeft.x < -0.5f) emaLeft = normL;
+                else                   emaLeft = emaPoint(emaLeft, normL, 0.2f);
+                putText(frame, cv::format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
+                    Point(eyeRectL.x, eyeRectL.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+            }
+            if (foundR) {
+                if (emaRight.x < -0.5f) emaRight = normR;
+                else                    emaRight = emaPoint(emaRight, normR, 0.2f);
+                putText(frame, cv::format("R(%.2f, %.2f)", emaRight.x, emaRight.y),
+                    Point(eyeRectR.x, eyeRectR.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+            }
+
         }
 
         // 안내 텍스트
