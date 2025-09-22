@@ -1,7 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include "preprocess.h"    // 전처리 헤더
-#include "BlinkDetector.h" // 깜빡임 감지
+#include "BlinkDetector.h"
 using namespace cv;
 using std::cout; using std::endl;
 
@@ -12,37 +11,63 @@ static Point2f emaPoint(const Point2f& prev, const Point2f& cur, float alpha = 0
 // pupil 찾기 함수 (전처리 + 컨투어 + 허프)
 static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
 {
-    // ✅ 전처리 적용
-    Mat bin = preprocessEye(eyeGray);
+    Mat proc;
 
-    // 컨투어 기반 탐지
+    // 1) Grayscale 변환
+    if (eyeGray.channels() == 3)
+        cvtColor(eyeGray, proc, COLOR_BGR2GRAY);
+    else
+        proc = eyeGray.clone();
+
+    // 2) CLAHE (국소 대비 향상)
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
+    clahe->apply(proc, proc);
+
+    // 3) Median Blur (edge 보존형 블러)
+    cv::medianBlur(proc, proc, 5);
+
+    // 4) Adaptive Threshold (조명 강인성 ↑)
+    cv::adaptiveThreshold(proc, proc, 255,
+        cv::ADAPTIVE_THRESH_MEAN_C,
+        cv::THRESH_BINARY_INV,
+        19, 5);
+
+    // 5) Morphology (닫힘 연산: 작은 흰 점 제거)
+    Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(3, 3));
+    morphologyEx(proc, proc, MORPH_CLOSE, kernel);
+
+    // 👉 전처리 결과 확인용 (크게 보기)
+    Mat debugShow;
+    resize(proc, debugShow, Size(300, 200));
+    imshow("Preprocessed Eye", debugShow);
+
+    // --- pupil 탐지 ---
     std::vector<std::vector<Point>> contours;
-    findContours(bin, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-    if (!contours.empty()) {
-        size_t idxMax = 0; double maxA = 0;
-        for (size_t i = 0; i < contours.size(); ++i) {
-            double a = contourArea(contours[i]);
-            if (a > maxA) { maxA = a; idxMax = i; }
-        }
-        Moments mu = moments(contours[idxMax]);
-        if (mu.m00 != 0) {
-            pupil = Point(cvRound(mu.m10 / mu.m00), cvRound(mu.m01 / mu.m00));
-            radius = std::sqrt(maxA / CV_PI);
-            return true;
-        }
-    }
+    findContours(proc, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
-    // 실패 시 허프 원 보조
-    std::vector<Vec3f> circles;
-    HoughCircles(eyeGray, circles, HOUGH_GRADIENT, 1, eyeGray.rows / 8, 200, 15, eyeGray.rows / 16, eyeGray.rows / 3);
-    if (!circles.empty()) {
+    if (contours.empty()) {
+        // 실패하면 허프 원 시도
+        std::vector<Vec3f> circles;
+        HoughCircles(proc, circles, HOUGH_GRADIENT, 1, eyeGray.rows / 8, 200, 15,
+            eyeGray.rows / 16, eyeGray.rows / 3);
+        if (circles.empty()) return false;
         Vec3f c = circles[0];
         pupil = Point(cvRound(c[0]), cvRound(c[1]));
         radius = c[2];
         return true;
     }
 
-    return false;
+    // 가장 큰 컨투어 선택
+    size_t idxMax = 0; double maxA = 0;
+    for (size_t i = 0; i < contours.size(); ++i) {
+        double a = contourArea(contours[i]);
+        if (a > maxA) { maxA = a; idxMax = i; }
+    }
+    Point2f c; float r;
+    minEnclosingCircle(contours[idxMax], c, r);
+    pupil = Point(cvRound(c.x), cvRound(c.y));
+    radius = r;
+    return true;
 }
 
 int main()
@@ -57,11 +82,16 @@ int main()
     }
 
     VideoCapture cap(0);
-    if (!cap.isOpened()) return -1;
+    if (!cap.isOpened()) {
+        std::cerr << "Cannot open camera\n";
+        return -1;
+    }
     cap.set(CAP_PROP_FRAME_WIDTH, 1280);
     cap.set(CAP_PROP_FRAME_HEIGHT, 720);
 
-    BlinkDetector left_eye_detector(5), right_eye_detector(5);
+    BlinkDetector left_eye_detector(5);
+    BlinkDetector right_eye_detector(5);
+
     Point2f emaLeft(-1, -1), emaRight(-1, -1);
 
     while (true) {
@@ -76,7 +106,7 @@ int main()
         for (const Rect& f : faces) {
             rectangle(frame, f, Scalar(0, 255, 0), 2);
 
-            Rect upperFace(f.x, f.y, f.width, (int)std::round(f.height * 0.6));
+            Rect upperFace = Rect(f.x, f.y, f.width, (int)std::round(f.height * 0.6));
             upperFace &= Rect(0, 0, frame.cols, frame.rows);
             Mat faceROI = gray(upperFace);
 
@@ -85,15 +115,18 @@ int main()
 
             const float faceCenterX = f.x + f.width * 0.5f;
             bool foundL = false, foundR = false;
-            Point2f normL(0, 0), normR(0, 0);
-            float radL = 0, radR = 0; Rect eyeRectL, eyeRectR;
             bool isLeftSide = false;
+            Point2f normL(0, 0), normR(0, 0);
+            float radL = 0.f, radR = 0.f;
+            Rect eyeRectL, eyeRectR;
 
             for (const Rect& eInFace : eyes) {
-                Rect eyeRect(eInFace.x + upperFace.x, eInFace.y + upperFace.y, eInFace.width, eInFace.height);
+                Rect eyeRect(eInFace.x + upperFace.x, eInFace.y + upperFace.y,
+                    eInFace.width, eInFace.height);
                 rectangle(frame, eyeRect, Scalar(255, 200, 0), 2);
 
                 Mat eyeGray = gray(eyeRect).clone();
+
                 Point pupil; float r = 0;
                 bool ok = findPupil(eyeGray, pupil, r);
 
@@ -104,34 +137,45 @@ int main()
                     Point pupilInFrame = Point(eyeRect.x + pupil.x, eyeRect.y + pupil.y);
                     circle(frame, pupilInFrame, (int)std::max(2.f, r), Scalar(0, 0, 255), 2);
 
-                    Point2f centerEye(eyeRect.x + eyeRect.width * 0.5f, eyeRect.y + eyeRect.height * 0.5f);
+                    Point2f centerEye(eyeRect.x + eyeRect.width * 0.5f,
+                        eyeRect.y + eyeRect.height * 0.5f);
                     Point2f offset = Point2f((float)pupilInFrame.x, (float)pupilInFrame.y) - centerEye;
-                    Point2f norm(offset.x / (eyeRect.width * 0.5f), offset.y / (eyeRect.height * 0.5f));
+                    Point2f norm(offset.x / (eyeRect.width * 0.5f),
+                        offset.y / (eyeRect.height * 0.5f));
 
-                    if (isLeftSide) { foundL = true; normL = norm; radL = r; eyeRectL = eyeRect; }
-                    else { foundR = true; normR = norm; radR = r; eyeRectR = eyeRect; }
+                    if (isLeftSide) {
+                        foundL = true; normL = norm; radL = r; eyeRectL = eyeRect;
+                    }
+                    else {
+                        foundR = true; normR = norm; radR = r; eyeRectR = eyeRect;
+                    }
+                }
+                else {
+                    putText(frame, "pupil?", Point(eyeRect.x, eyeRect.y - 8),
+                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(50, 50, 255), 1);
                 }
             }
 
-            // EMA + 라벨 출력
             if (foundL) {
                 emaLeft = (emaLeft.x < -0.5f) ? normL : emaPoint(emaLeft, normL, 0.2f);
                 putText(frame, cv::format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
-                    Point(eyeRectL.x, eyeRectL.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+                    Point(eyeRectL.x, eyeRectL.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
+                    Scalar(0, 255, 255), 1);
             }
             if (foundR) {
                 emaRight = (emaRight.x < -0.5f) ? normR : emaPoint(emaRight, normR, 0.2f);
                 putText(frame, cv::format("R(%.2f, %.2f)", emaRight.x, emaRight.y),
-                    Point(eyeRectR.x, eyeRectR.y - 8), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 255), 1);
+                    Point(eyeRectR.x, eyeRectR.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
+                    Scalar(0, 255, 255), 1);
             }
 
-            // BlinkDetector
             if (eyes.size() == 1) {
                 if (!isLeftSide) {
                     left_eye_detector.checkBlink(false);
                     if (left_eye_detector.isBlinking()) {
                         cout << "LEFT CLICK!\n";
-                        putText(frame, "LEFT CLICK!", Point(50, 80), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
+                        putText(frame, "LEFT CLICK!", Point(50, 80),
+                            FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
                         left_eye_detector.reset();
                     }
                 }
@@ -139,7 +183,8 @@ int main()
                     right_eye_detector.checkBlink(false);
                     if (right_eye_detector.isBlinking()) {
                         cout << "RIGHT CLICK!\n";
-                        putText(frame, "RIGHT CLICK!", Point(50, 120), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
+                        putText(frame, "RIGHT CLICK!", Point(50, 120),
+                            FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
                         right_eye_detector.reset();
                     }
                 }
@@ -150,9 +195,11 @@ int main()
             }
         }
 
-        putText(frame, "Press 'q' to quit", Point(20, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
-        imshow("Eye Tracker (with Preprocessing)", frame);
-        if ((char)waitKey(1) == 'q') break;
+        putText(frame, "Press 'q' to quit", Point(20, 30),
+            FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
+        imshow("Eye Tracker (OpenCV)", frame);
+        char key = (char)waitKey(1);
+        if (key == 'q' || key == 27) break;
     }
     return 0;
 }
