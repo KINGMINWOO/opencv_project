@@ -10,22 +10,22 @@
 //
 //static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
 //{
-//    // 1) ÀüÃ³¸®
+//    // 1) ï¿½ï¿½Ã³ï¿½ï¿½
 //    Mat blurImg; GaussianBlur(eyeGray, blurImg, Size(7, 7), 0);
-//    // ´«²¨Ç®/ÇÏÀÌ¶óÀÌÆ® Á¦°Å¸¦ À§ÇØ »óÀ§ Åæ ¾ïÁ¦
+//    // ï¿½ï¿½ï¿½ï¿½Ç®/ï¿½ï¿½ï¿½Ì¶ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //    Mat eq; equalizeHist(blurImg, eq);
-//    // 2) µ¿°øÀº ¾îµÎ¿ò: Otsu + ¹ÝÀü
+//    // 2) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î¿ï¿½: Otsu + ï¿½ï¿½ï¿½ï¿½
 //    Mat bin;
 //    threshold(eq, bin, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);
 //
-//    // 3) ¿­¸² ¿¬»êÀ¸·Î ÀâÆ¼ Á¦°Å
+//    // 3) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½
 //    morphologyEx(bin, bin, MORPH_OPEN, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)));
 //
-//    // 4) Å« ÄÁÅõ¾î Áß½ÉÀ» ÈÄº¸·Î
+//    // 4) Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ ï¿½Äºï¿½ï¿½ï¿½
 //    std::vector<std::vector<Point>> contours;
 //    findContours(bin, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 //    if (contours.empty()) {
-//        // ½ÇÆÐÇÏ¸é ÇãÇÁ¿ø ½Ãµµ
+//        // ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½
 //        std::vector<Vec3f> circles;
 //        HoughCircles(blurImg, circles, HOUGH_GRADIENT, 1, eyeGray.rows / 8, 200, 15, eyeGray.rows / 16, eyeGray.rows / 3);
 //        if (circles.empty()) return false;
@@ -34,7 +34,7 @@
 //        radius = c[2];
 //        return true;
 //    }
-//    // °¡Àå Å« ÄÁÅõ¾î ¼±ÅÃ
+//    // ï¿½ï¿½ï¿½ï¿½ Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //    size_t idxMax = 0; double maxA = 0;
 //    for (size_t i = 0; i < contours.size(); ++i) {
 //        double a = contourArea(contours[i]);
@@ -49,8 +49,8 @@
 //
 //int main()
 //{
-//    // 0) ºÐ·ù±â ·Îµå (OpenCV ¼³Ä¡ °æ·ÎÀÇ haarcascade ÆÄÀÏ °æ·Î¸¦ ¸ÂÃçÁÖ¼¼¿ä)
-//    // ¿¹: Linux: /usr/share/opencv4/haarcascades/..., Windows: <opencv>/build/etc/haarcascades/...
+//    // 0) ï¿½Ð·ï¿½ï¿½ï¿½ ï¿½Îµï¿½ (OpenCV ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ haarcascade ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½)
+//    // ï¿½ï¿½: Linux: /usr/share/opencv4/haarcascades/..., Windows: <opencv>/build/etc/haarcascades/...
 //    std::string face_cascade_path = "haarcascade_frontalface_default.xml";
 //    std::string eye_cascade_path = "haarcascade_eye_tree_eyeglasses.xml";
 //
@@ -68,32 +68,32 @@
 //    cap.set(CAP_PROP_FRAME_WIDTH, 1280);
 //    cap.set(CAP_PROP_FRAME_HEIGHT, 720);
 //
-//    // ¿ÞÂÊ ´«°ú ¿À¸¥ÂÊ ´«ÀÇ °´Ã¼ »ý¼º, ÆÄ¶ó¹ÌÅÍ´Â ÇÁ·¹ÀÓ ¼ö
+//    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½, ï¿½Ä¶ï¿½ï¿½ï¿½Í´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 //    BlinkDetector left_eye_detector(5);
 //    BlinkDetector right_eye_detector(5);
 //
-//    Point2f emaLeft(-1, -1), emaRight(-1, -1); // EMA ÃÊ±âÈ­
+//    Point2f emaLeft(-1, -1), emaRight(-1, -1); // EMA ï¿½Ê±ï¿½È­
 //    while (true) {
 //        Mat frame; cap >> frame;
 //        if (frame.empty()) break;
 //
 //        Mat gray; cvtColor(frame, gray, COLOR_BGR2GRAY);
 //
-//        // 1) ¾ó±¼ °ËÃâ
+//        // 1) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //        std::vector<Rect> faces;
 //        faceCasc.detectMultiScale(gray, faces, 1.1, 8, 0, Size(120, 120));
 //
 //        for (const Rect& f : faces) {
 //            rectangle(frame, f, Scalar(0, 255, 0), 2);
 //
-//            // 2) ¾ó±¼ ROI¿¡¼­ ´« °ËÃâ (»ó¹ÝºÎ ¿ì¼±)
+//            // 2) ï¿½ï¿½ ROIï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Ýºï¿½ ï¿½ì¼±)
 //            Rect upperFace = Rect(f.x, f.y, f.width, f.height * 0.6);
 //            upperFace &= Rect(0, 0, frame.cols, frame.rows);
 //            Mat faceROI = gray(upperFace);
 //
 //            std::vector<Rect> eyes;
 //            eyeCasc.detectMultiScale(faceROI, eyes, 1.1, 8, 0, Size(30, 30));
-//            // ÁÂ/¿ì ´«À» Á¤·ÄÇØ »ç¿ë
+//            // ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 //            std::sort(eyes.begin(), eyes.end(), [](const Rect& a, const Rect& b) { return a.x < b.x; });
 //
 //            for (size_t i = 0; i < eyes.size() && i < 2; ++i) {
@@ -103,22 +103,22 @@
 //
 //                Mat eyeGray = gray(eyeRect).clone();
 //
-//                // 3) µ¿°ø Ã£±â
+//                // 3) ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
 //                Point pupil; float r = 0;
 //                bool ok = findPupil(eyeGray, pupil, r);
 //                if (ok) {
-//                    // 4) ÇÁ·¹ÀÓ ÁÂÇ¥·Î º¯È¯
+//                    // 4) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½È¯
 //                    Point pupilInFrame = Point(eyeRect.x + pupil.x, eyeRect.y + pupil.y);
 //                    circle(frame, pupilInFrame, (int)std::max(2.f, r), Scalar(0, 0, 255), 2);
 //
-//                    // ½Ã¼± ÁÂÇ¥ Á¤±ÔÈ­ (-1..1): ´« ROI Áß½É ±âÁØ
+//                    // ï¿½Ã¼ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½È­ (-1..1): ï¿½ï¿½ ROI ï¿½ß½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //                    Point2f center(eyeRect.x + eyeRect.width * 0.5f, eyeRect.y + eyeRect.height * 0.5f);
 //                    Point2f offset = Point2f(pupilInFrame) - center;
 //                    Point2f norm(offset.x / (eyeRect.width * 0.5f),
 //                        offset.y / (eyeRect.height * 0.5f));
 //
-//                    // 5) Èçµé¸² °¨¼Ò(EMA)
-//                    if (i == 0) { // ¿ÞÂÊ ´«(È­¸é»ó ÁÂÃø)
+//                    // 5) ï¿½ï¿½é¸² ï¿½ï¿½ï¿½ï¿½(EMA)
+//                    if (i == 0) { // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½(È­ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 //                        if (emaLeft.x < -0.5f) emaLeft = norm;
 //                        else emaLeft = emaPoint(emaLeft, norm, 0.2f);
 //                        putText(frame, cv::format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
@@ -136,16 +136,16 @@
 //                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(50, 50, 255), 1);
 //                }
 //            }
-//            //if (i == 0) { // ¿ÞÂÊ ´« ±ôºýÀÓ Ã³¸®
-//            //    left_eye_detector.checkBlink(ok); // 'ok' º¯¼ö(true/false)¸¦ Á÷Á¢ Àü´Þ
+//            //if (i == 0) { // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+//            //    left_eye_detector.checkBlink(ok); // 'ok' ï¿½ï¿½ï¿½ï¿½(true/false)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //            //    if (left_eye_detector.isBlinking()) {
 //            //        std::cout << "LEFT CLICK!" << std::endl;
 //            //        putText(frame, "LEFT CLICK!", Point(50, 80), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
 //            //        left_eye_detector.reset();
 //            //    }
 //            //}
-//            //else { // ¿À¸¥ÂÊ ´« ±ôºýÀÓ Ã³¸®
-//            //    right_eye_detector.checkBlink(ok); // 'ok' º¯¼ö(true/false)¸¦ Á÷Á¢ Àü´Þ
+//            //else { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+//            //    right_eye_detector.checkBlink(ok); // 'ok' ï¿½ï¿½ï¿½ï¿½(true/false)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //            //    if (right_eye_detector.isBlinking()) {
 //            //        std::cout << "RIGHT CLICK!" << std::endl;
 //            //        putText(frame, "RIGHT CLICK!", Point(50, 120), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
@@ -154,7 +154,7 @@
 //            //}
 //        }
 //
-//        // ¾È³» ÅØ½ºÆ®
+//        // ï¿½È³ï¿½ ï¿½Ø½ï¿½Æ®
 //        putText(frame, "Press 'q' to quit", Point(20, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
 //        imshow("Eye Tracker (OpenCV)", frame);
 //        char key = (char)waitKey(1);
@@ -178,22 +178,22 @@ static Point2f emaPoint(const Point2f& prev, const Point2f& cur, float alpha = 0
 
 static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
 {
-    // 1) ÀüÃ³¸®
+    // 1) ï¿½ï¿½Ã³ï¿½ï¿½
     Mat blurImg; GaussianBlur(eyeGray, blurImg, Size(7, 7), 0);
-    // ´«²¨Ç®/ÇÏÀÌ¶óÀÌÆ® Á¦°Å¸¦ À§ÇØ »óÀ§ Åæ ¾ïÁ¦
+    // ï¿½ï¿½ï¿½ï¿½Ç®/ï¿½ï¿½ï¿½Ì¶ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     Mat eq; equalizeHist(blurImg, eq);
-    // 2) µ¿°øÀº ¾îµÎ¿ò: Otsu + ¹ÝÀü
+    // 2) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î¿ï¿½: Otsu + ï¿½ï¿½ï¿½ï¿½
     Mat bin;
     threshold(eq, bin, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);
 
-    // 3) ¿­¸² ¿¬»êÀ¸·Î ÀâÆ¼ Á¦°Å
+    // 3) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½
     morphologyEx(bin, bin, MORPH_OPEN, getStructuringElement(MORPH_ELLIPSE, Size(3, 3)));
 
-    // 4) Å« ÄÁÅõ¾î Áß½ÉÀ» ÈÄº¸·Î
+    // 4) Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß½ï¿½ï¿½ï¿½ ï¿½Äºï¿½ï¿½ï¿½
     std::vector<std::vector<Point>> contours;
     findContours(bin, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
     if (contours.empty()) {
-        // ½ÇÆÐÇÏ¸é ÇãÇÁ¿ø ½Ãµµ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½
         std::vector<Vec3f> circles;
         HoughCircles(blurImg, circles, HOUGH_GRADIENT, 1, eyeGray.rows / 8, 200, 15, eyeGray.rows / 16, eyeGray.rows / 3);
         if (circles.empty()) return false;
@@ -202,7 +202,7 @@ static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
         radius = c[2];
         return true;
     }
-    // °¡Àå Å« ÄÁÅõ¾î ¼±ÅÃ
+    // ï¿½ï¿½ï¿½ï¿½ Å« ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     size_t idxMax = 0; double maxA = 0;
     for (size_t i = 0; i < contours.size(); ++i) {
         double a = contourArea(contours[i]);
@@ -217,8 +217,8 @@ static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
 
 int main()
 {
-    // 0) ºÐ·ù±â ·Îµå (OpenCV ¼³Ä¡ °æ·ÎÀÇ haarcascade ÆÄÀÏ °æ·Î¸¦ ¸ÂÃçÁÖ¼¼¿ä)
-    // ¿¹: Linux: /usr/share/opencv4/haarcascades/..., Windows: <opencv>/build/etc/haarcascades/...
+    // 0) ï¿½Ð·ï¿½ï¿½ï¿½ ï¿½Îµï¿½ (OpenCV ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ haarcascade ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½)
+    // ï¿½ï¿½: Linux: /usr/share/opencv4/haarcascades/..., Windows: <opencv>/build/etc/haarcascades/...
     std::string face_cascade_path = "haarcascade_frontalface_default.xml";
     std::string eye_cascade_path = "haarcascade_eye_tree_eyeglasses.xml";
 
@@ -236,27 +236,27 @@ int main()
     cap.set(CAP_PROP_FRAME_WIDTH, 1280);
     cap.set(CAP_PROP_FRAME_HEIGHT, 720);
 
-    // ¿ÞÂÊ ´«°ú ¿À¸¥ÂÊ ´«ÀÇ °´Ã¼ »ý¼º, ÆÄ¶ó¹ÌÅÍ´Â ÇÁ·¹ÀÓ ¼ö
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½, ï¿½Ä¶ï¿½ï¿½ï¿½Í´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     BlinkDetector left_eye_detector(5);
     BlinkDetector right_eye_detector(5);
 
-    Point2f emaLeft(-1, -1), emaRight(-1, -1); // EMA ÃÊ±âÈ­
+    Point2f emaLeft(-1, -1), emaRight(-1, -1); // EMA ï¿½Ê±ï¿½È­
     while (true) {
         Mat frame; cap >> frame;
         if (frame.empty()) break;
 
-        // === ÁÂ¿ì ¹ÝÀü(°Å¿ï ¸ðµå) ===
+        // === ï¿½Â¿ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½Å¿ï¿½ ï¿½ï¿½ï¿½) ===
         cv::flip(frame, frame, 1);
 
         Mat gray; cvtColor(frame, gray, COLOR_BGR2GRAY);
 
-        // 1) ¾ó±¼ °ËÃâ
+        // 1) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         std::vector<Rect> faces;
         faceCasc.detectMultiScale(gray, faces, 1.1, 3, 0, Size(120, 120));
         for (const Rect& f : faces) {
             rectangle(frame, f, Scalar(0, 255, 0), 2);
 
-            // 2) ¾ó±¼ ROI¿¡¼­ ´« °ËÃâ (»ó¹ÝºÎ ¿ì¼±)
+            // 2) ï¿½ï¿½ ROIï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Ýºï¿½ ï¿½ì¼±)
             Rect upperFace = Rect(f.x, f.y, f.width, (int)std::round(f.height * 0.6));
             upperFace &= Rect(0, 0, frame.cols, frame.rows);
             Mat faceROI = gray(upperFace);
@@ -264,10 +264,10 @@ int main()
             std::vector<Rect> eyes;
             eyeCasc.detectMultiScale(faceROI, eyes, 1.1, 2, 0, Size(30, 30));
 
-            // ¾ó±¼ Áß¾Ó x (ÇÁ·¹ÀÓ ÁÂÇ¥°è)
+            // ï¿½ï¿½ ï¿½ß¾ï¿½ x (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½)
             const float faceCenterX = f.x + f.width * 0.5f;
 
-            // ÇÑ ÇÁ·¹ÀÓ¿¡¼­ÀÇ °á°ú¸¦ ´ãÀ» ±×¸©
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½
             bool foundL = false, foundR = false;
             bool isLeftSide = false;
             Point2f normL(0, 0), normR(0, 0);
@@ -275,26 +275,26 @@ int main()
             Rect eyeRectL, eyeRectR;
 
             for (const Rect& eInFace : eyes) {
-                // ÇÁ·¹ÀÓ ÁÂÇ¥°èÀÇ ´« ¹Ú½º
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ú½ï¿½
                 Rect eyeRect(eInFace.x + upperFace.x, eInFace.y + upperFace.y, eInFace.width, eInFace.height);
                 rectangle(frame, eyeRect, Scalar(255, 200, 0), 2);
 
                 Mat eyeGray = gray(eyeRect).clone();
 
-                // 3) µ¿°ø Ã£±â
+                // 3) ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
                 Point pupil; float r = 0;
                 bool ok = findPupil(eyeGray, pupil, r);
 
-                // ´« Áß½É x
+                // ï¿½ï¿½ ï¿½ß½ï¿½ x
                 float eyeCenterX = eyeRect.x + eyeRect.width * 0.5f;
                 isLeftSide = (eyeCenterX < faceCenterX);   // Left : TRUE / Right : FALSE
 
                 if (ok) {
-                    // ÇÁ·¹ÀÓ ÁÂÇ¥·Î È¯»êµÈ µ¿°ø
+                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ È¯ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                     Point pupilInFrame = Point(eyeRect.x + pupil.x, eyeRect.y + pupil.y);
                     circle(frame, pupilInFrame, (int)std::max(2.f, r), Scalar(0, 0, 255), 2);
 
-                    // ´« ROI Áß½É ±âÁØ Á¤±ÔÈ­ (-1..1)
+                    // ï¿½ï¿½ ROI ï¿½ß½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ (-1..1)
                     Point2f centerEye(eyeRect.x + eyeRect.width * 0.5f, eyeRect.y + eyeRect.height * 0.5f);
                     Point2f offset = Point2f((float)pupilInFrame.x, (float)pupilInFrame.y) - centerEye;
                     Point2f norm(offset.x / (eyeRect.width * 0.5f),
@@ -313,7 +313,7 @@ int main()
                 }
             }
 
-            // 4) Èçµé¸² °¨¼Ò(EMA) + ¶óº§ °íÁ¤ Ãâ·Â
+            // 4) ï¿½ï¿½é¸² ï¿½ï¿½ï¿½ï¿½(EMA) + ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
             if (foundL) {
                 if (emaLeft.x < -0.5f) emaLeft = normL;
                 else                   emaLeft = emaPoint(emaLeft, normL, 0.2f);
@@ -328,16 +328,16 @@ int main()
             }
             
             if (eyes.size() == 1) {
-                if (!isLeftSide) { // ¿ÞÂÊ ´« ±ôºýÀÓ Ã³¸®
-                    left_eye_detector.checkBlink(false); // 'ok' º¯¼ö(true/false)¸¦ Á÷Á¢ Àü´Þ
+                if (!isLeftSide) { // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+                    left_eye_detector.checkBlink(false); // 'ok' ï¿½ï¿½ï¿½ï¿½(true/false)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                     if (left_eye_detector.isBlinking()) {
                         std::cout << "LEFT CLICK!" << std::endl;
                         putText(frame, "LEFT CLICK!", Point(50, 80), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
                         left_eye_detector.reset();
                     }
                 }
-                else { // ¿À¸¥ÂÊ ´« ±ôºýÀÓ Ã³¸®
-                    right_eye_detector.checkBlink(false); // 'ok' º¯¼ö(true/false)¸¦ Á÷Á¢ Àü´Þ
+                else { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
+                    right_eye_detector.checkBlink(false); // 'ok' ï¿½ï¿½ï¿½ï¿½(true/false)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                     if (right_eye_detector.isBlinking()) {
                         std::cout << "RIGHT CLICK!" << std::endl;
                         putText(frame, "RIGHT CLICK!", Point(50, 120), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
@@ -351,7 +351,7 @@ int main()
             }
         }
 
-        // ¾È³» ÅØ½ºÆ®
+        // ï¿½È³ï¿½ ï¿½Ø½ï¿½Æ®
         putText(frame, "Press 'q' to quit", Point(20, 30), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
         imshow("Eye Tracker (OpenCV)", frame);
         char key = (char)waitKey(1);
