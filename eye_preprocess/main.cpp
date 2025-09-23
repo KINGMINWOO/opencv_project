@@ -9,44 +9,35 @@ static Point2f emaPoint(const Point2f& prev, const Point2f& cur, float alpha = 0
 }
 
 // pupil 찾기 함수 (전처리 + 컨투어 + 허프)
-static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
+// 👉 전처리 결과를 outProc에 반환
+static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius, Mat& outProc)
 {
     Mat proc;
 
-    // 1) Grayscale 변환
     if (eyeGray.channels() == 3)
         cvtColor(eyeGray, proc, COLOR_BGR2GRAY);
     else
         proc = eyeGray.clone();
 
-    // 2) CLAHE (국소 대비 향상)
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
+    Ptr<CLAHE> clahe = createCLAHE(2.0, Size(8, 8));
     clahe->apply(proc, proc);
 
-    // 3) Median Blur (edge 보존형 블러)
-    cv::medianBlur(proc, proc, 5);
+    medianBlur(proc, proc, 5);
 
-    // 4) Adaptive Threshold (조명 강인성 ↑)
-    cv::adaptiveThreshold(proc, proc, 255,
-        cv::ADAPTIVE_THRESH_MEAN_C,
-        cv::THRESH_BINARY_INV,
+    adaptiveThreshold(proc, proc, 255,
+        ADAPTIVE_THRESH_MEAN_C,
+        THRESH_BINARY_INV,
         19, 5);
 
-    // 5) Morphology (닫힘 연산: 작은 흰 점 제거)
     Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(3, 3));
     morphologyEx(proc, proc, MORPH_CLOSE, kernel);
 
-    // 👉 전처리 결과 확인용 (크게 보기)
-    Mat debugShow;
-    resize(proc, debugShow, Size(300, 200));
-    imshow("Preprocessed Eye", debugShow);
+    outProc = proc.clone();
 
-    // --- pupil 탐지 ---
     std::vector<std::vector<Point>> contours;
     findContours(proc, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
     if (contours.empty()) {
-        // 실패하면 허프 원 시도
         std::vector<Vec3f> circles;
         HoughCircles(proc, circles, HOUGH_GRADIENT, 1, eyeGray.rows / 8, 200, 15,
             eyeGray.rows / 16, eyeGray.rows / 3);
@@ -57,7 +48,6 @@ static bool findPupil(const Mat& eyeGray, Point& pupil, float& radius)
         return true;
     }
 
-    // 가장 큰 컨투어 선택
     size_t idxMax = 0; double maxA = 0;
     for (size_t i = 0; i < contours.size(); ++i) {
         double a = contourArea(contours[i]);
@@ -94,6 +84,19 @@ int main()
 
     Point2f emaLeft(-1, -1), emaRight(-1, -1);
 
+    // 🔹 창 세팅
+    namedWindow("Eye Tracker (OpenCV)", WINDOW_NORMAL);
+    resizeWindow("Eye Tracker (OpenCV)", 640, 480);
+    moveWindow("Eye Tracker (OpenCV)", 50, 50);
+
+    namedWindow("Eyes (Original)", WINDOW_NORMAL);
+    resizeWindow("Eyes (Original)", 400, 200);
+    moveWindow("Eyes (Original)", 700, 50);
+
+    namedWindow("Eyes (Preprocessed)", WINDOW_NORMAL);
+    resizeWindow("Eyes (Preprocessed)", 400, 200);
+    moveWindow("Eyes (Preprocessed)", 700, 300);
+
     while (true) {
         Mat frame; cap >> frame;
         if (frame.empty()) break;
@@ -120,15 +123,18 @@ int main()
             float radL = 0.f, radR = 0.f;
             Rect eyeRectL, eyeRectR;
 
+            Mat leftEye, rightEye, leftProc, rightProc;
+
             for (const Rect& eInFace : eyes) {
                 Rect eyeRect(eInFace.x + upperFace.x, eInFace.y + upperFace.y,
                     eInFace.width, eInFace.height);
-                rectangle(frame, eyeRect, Scalar(255, 200, 0), 2);
+                //rectangle(frame, eyeRect, Scalar(255, 200, 0), 2);
 
                 Mat eyeGray = gray(eyeRect).clone();
+                Mat eyeProc;
 
                 Point pupil; float r = 0;
-                bool ok = findPupil(eyeGray, pupil, r);
+                bool ok = findPupil(eyeGray, pupil, r, eyeProc);
 
                 float eyeCenterX = eyeRect.x + eyeRect.width * 0.5f;
                 isLeftSide = (eyeCenterX < faceCenterX);
@@ -145,9 +151,13 @@ int main()
 
                     if (isLeftSide) {
                         foundL = true; normL = norm; radL = r; eyeRectL = eyeRect;
+                        leftEye = eyeGray.clone();
+                        leftProc = eyeProc.clone();
                     }
                     else {
                         foundR = true; normR = norm; radR = r; eyeRectR = eyeRect;
+                        rightEye = eyeGray.clone();
+                        rightProc = eyeProc.clone();
                     }
                 }
                 else {
@@ -156,43 +166,42 @@ int main()
                 }
             }
 
+            // 🔹 왼/오른쪽 눈 합쳐서 한 화면에 표시
+            if (!leftEye.empty() && !rightEye.empty()) {
+                Mat origEyes, procEyes;
+                resize(leftEye, leftEye, Size(200, 100));
+                resize(rightEye, rightEye, Size(200, 100));
+                resize(leftProc, leftProc, Size(200, 100));
+                resize(rightProc, rightProc, Size(200, 100));
+
+                hconcat(leftEye, rightEye, origEyes);
+                hconcat(leftProc, rightProc, procEyes);
+
+                putText(origEyes, "Left", Point(10, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255), 1);
+                putText(origEyes, "Right", Point(210, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255), 1);
+
+                putText(procEyes, "Left Preproc", Point(10, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255), 1);
+                putText(procEyes, "Right Preproc", Point(210, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255, 255, 255), 1);
+
+                imshow("Eyes (Original)", origEyes);
+                imshow("Eyes (Preprocessed)", procEyes);
+            }
+
             if (foundL) {
                 emaLeft = (emaLeft.x < -0.5f) ? normL : emaPoint(emaLeft, normL, 0.2f);
-                putText(frame, cv::format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
-                    Point(eyeRectL.x, eyeRectL.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
-                    Scalar(0, 255, 255), 1);
+                //putText(frame, format("L(%.2f, %.2f)", emaLeft.x, emaLeft.y),
+                    //Point(eyeRectL.x, eyeRectL.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
+                    //Scalar(0, 255, 255), 1);
             }
             if (foundR) {
                 emaRight = (emaRight.x < -0.5f) ? normR : emaPoint(emaRight, normR, 0.2f);
-                putText(frame, cv::format("R(%.2f, %.2f)", emaRight.x, emaRight.y),
-                    Point(eyeRectR.x, eyeRectR.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
-                    Scalar(0, 255, 255), 1);
+                //putText(frame, format("R(%.2f, %.2f)", emaRight.x, emaRight.y),
+                    //Point(eyeRectR.x, eyeRectR.y - 8), FONT_HERSHEY_SIMPLEX, 0.5,
+                   // Scalar(0, 255, 255), 1);
             }
 
-            if (eyes.size() == 1) {
-                if (!isLeftSide) {
-                    left_eye_detector.checkBlink(false);
-                    if (left_eye_detector.isBlinking()) {
-                        cout << "LEFT CLICK!\n";
-                        putText(frame, "LEFT CLICK!", Point(50, 80),
-                            FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
-                        left_eye_detector.reset();
-                    }
-                }
-                else {
-                    right_eye_detector.checkBlink(false);
-                    if (right_eye_detector.isBlinking()) {
-                        cout << "RIGHT CLICK!\n";
-                        putText(frame, "RIGHT CLICK!", Point(50, 120),
-                            FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255), 2);
-                        right_eye_detector.reset();
-                    }
-                }
-            }
-            else {
-                left_eye_detector.checkBlink(true);
-                right_eye_detector.checkBlink(true);
-            }
+            left_eye_detector.checkBlink(true);
+            right_eye_detector.checkBlink(true);
         }
 
         putText(frame, "Press 'q' to quit", Point(20, 30),
